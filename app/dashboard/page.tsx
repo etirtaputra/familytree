@@ -5,11 +5,6 @@ import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 interface FamilyTree {
   tree_id: string;
   name: string;
@@ -30,6 +25,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/auth/login');
@@ -43,6 +43,11 @@ export default function DashboardPage() {
 
   const fetchTrees = async (userId: string) => {
     try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
       const { data, error } = await supabase
         .from('family_trees')
         .select('*')
@@ -64,6 +69,11 @@ export default function DashboardPage() {
 
     setCreatingTree(true);
     try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
       const { data, error } = await supabase
         .from('family_trees')
         .insert([
@@ -91,6 +101,10 @@ export default function DashboardPage() {
   };
 
   const handleLogout = async () => {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     await supabase.auth.signOut();
     router.push('/');
   };
