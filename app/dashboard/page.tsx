@@ -1,11 +1,10 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
+import { createClient } from '@supabase/supabase-js';
 
 interface FamilyTree {
   tree_id: string;
@@ -13,213 +12,168 @@ interface FamilyTree {
   description: string;
   is_public: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export default function DashboardPage() {
+  const { user, loading, signOut } = useAuth();
   const [trees, setTrees] = useState<FamilyTree[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [loadingTrees, setLoadingTrees] = useState(true);
+  const [showNewTreeForm, setShowNewTreeForm] = useState(false);
   const [newTreeName, setNewTreeName] = useState('');
-  const [newTreeDesc, setNewTreeDesc] = useState('');
+  const [newTreeDescription, setNewTreeDescription] = useState('');
   const [creatingTree, setCreatingTree] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/login');
-        return;
-      }
-      setUser(user);
-      fetchTrees(user.id);
-    };
-    checkAuth();
-  }, [router]);
-
-  const fetchTrees = async (userId: string) => {
-    try {
-      const supabase = createClient(
+    if (!loading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, loading, ro  }, [user, loading, ro  }, [user, l(u  }, [user,  fe  }, [user, loading, ro  }, [user, loading, ro  },s   }, [user, loading, ro {
+                         eateClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
 
       const { data, error } = await supabase
-        .from('family_trees')
+          rom('family_trees')
         .select('*')
-        .eq('owner_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTrees(data || []);
-    } catch (err: any) {
-      setError(err.message);
+        .eq(        .eq(  er?.id)
+        .order('updated_a        .order('updated_a        .order(ro        .order('updated_a        .order('upd    } catch (error) {
+      console.error('Error fetching trees:', error);
     } finally {
-      setLoading(false);
+      setLoadingTrees(false);
     }
   };
 
-  const handleCreateTree = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !newTreeName.trim()) return;
+  const handleCreateTree = async (e: React.FormEve  const handleCreateTree = async (e: React.FormEveame.trim()) return;
 
-    setCreatingTree(true);
     try {
+      setCreatingTree(true);
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
 
-      const { data, error } = await supabase
+                                  t supabase
         .from('family_trees')
-        .insert([
-          {
-            owner_id: user.id,
-            name: newTreeName,
-            description: newTreeDesc,
-            is_public: false,
-            visibility: 'private',
-          },
-        ])
-        .select();
+        .insert({
+          owner_id: user?.id,
+          name: newTreeName,
+          description: newTreeDescription,
+          is_public: false,
+          visi          visi          visi          visi   ()
+        .single();
 
       if (error) throw error;
-      if (data) {
-        setTrees([data[0], ...trees]);
-        setNewTreeName('');
-        setNewTreeDesc('');
-      }
-    } catch (err: any) {
-      setError(err.message);
+      iset      iset      iset      iset      iset   n('');
+      setShowNewTreeForm(false);
+      await fetchTrees();
+    } catch (error) {
+      console.error('Error creating tree:', error);
     } finally {
       setCreatingTree(false);
     }
   };
 
-  const handleLogout = async () => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const handleDeleteTr  const handleDeleteTr  const handleDeleteTr  com('Ar  const handle want to delete this family tree?')) return;
+
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_      _SUPABASE_ANON_KEY!
+      );
+
+                                      
+                                           te()
+        .eq('tree_id', treeId);
+
+      if (error) t      iror      if (error) t      iror      if (errerro      if (error) t error('Erro      if (erree:',      if (error) t      f (loa      if (error) t      iroes)) {
+    return (
+      <div className="min      <div className="mex it      <div className="min      <div className="mex it    center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-          <p class..</p>
+                     </div>
     );
-    await supabase.auth.signOut();
-    router.push('/');
-  };
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <nav className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">🌳 Family Tree Tracker</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 dark:text-gray-400">{user?.email}</span>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Create New Tree */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Create New Family Tree</h2>
-          <form onSubmit={handleCreateTree} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tree Name *
-              </label>
-              <input
-                type="text"
-                value={newTreeName}
-                onChange={(e) => setNewTreeName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="e.g., Smith Family"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Description
-              </label>
-              <textarea
-                value={newTreeDesc}
-                onChange={(e) => setNewTreeDesc(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Add a description..."
-                rows={3}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={creatingTree || !newTreeName.trim()}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium"
-            >
-              {creatingTree ? 'Creating...' : 'Create Tree'}
-            </button>
-          </form>
-        </div>
-
-        {/* Family Trees List */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Your Family Trees</h2>
-
-          {loading ? (
-            <div className="text-center text-gray-600 dark:text-gray-400">Loading...</div>
-          ) : error ? (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-200">
-              {error}
-            </div>
-          ) : trees.length === 0 ? (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
-              <p className="text-gray-600 dark:text-gray-400 mb-4">No family trees yet. Create one above!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {trees.map((tree) => (
-                <div
-                  key={tree.tree_id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-                >
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{tree.name}</h3>
-                  {tree.description && (
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{tree.description}</p>
-                  )}
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">
-                    Created {new Date(tree.created_at).toLocaleDateString()}
-                  </p>
-                  <Link
-                    href={`/family-trees/${tree.tree_id}`}
-                    className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm"
-                  >
-                    Open →
-                  </Link>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Try Demo */}
-        <div className="mt-12 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-center">
-          <p className="text-gray-700 dark:text-gray-300 mb-4">Want to see it in action?</p>
-          <Link
-            href="/family-trees/demo"
-            className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+    <div className="min-h-screen bg-gray-50">    <div className="min-h-screen bg-gray-50">    <div className="min-h-screen bg-gray-50">    <div className="min-h-screen bg-gray-"max-w-7xl mx-    <div className="min-h-scrter justify-between">
+          <div>
+            <h1 c            <h1 c            <h1 c          🌳 My Family Trees</h1>
+            <p className="text-sm text-gray-600">{user.email}</p>
+          </          </          
+                                                                                                                                                                                                              Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Create New Tree Button */}
+        {!showNewT        {!showNewT        {!showNewT        {!showNewT        {!showNewT        {!showNewT        {!showNewTb-        {!showNewT        {!showNewT        {!showte r        {!showNewT    transition"
           >
-            View Demo with Sample Data
-          </Link>
-        </div>
-      </main>
+                         F  ily Tree
+          </button>
+        )}
+
+        {/* Create Tree Form */}
+        {showNewTreeForm && (
+          <div className="mb-8 p-6 bg-white rounded-lg shadow-md border border-gray-200">
+            <h2 className="text-2xl font-bold mb-6 text-gray-            <hw             <h2 className="text-2xl font-bold mb-6 text-gray-            <hw         
+                                                                 sm                               ">
+                                                                                                                                                                                                                    
+                                                       
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={creatingTree}
+                />
+              </div>
+
+              <div>
+                <label className=                <label className=ray-700 mb-1">
+                  Des                  Des                              Des       <t                  Des                  Des                              Des       <t    setNewTreeDescription(e.target.value)}
+                  placeholder="Add a description for this family tree..."
+                  rows={3}
+                  classNa                  classNa                  classNa                  classNa                  classblue-500"
+                  disabled={creatingTree}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={creatingTree || !newTreeName.trim()}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition"
+                >
+                  {creatingTree ? 'Cr      ...' : 'Create Tree'}
+                </button>
+                                                                                   () =>                                                                                   () =>                                                                                   () =>                              00 ho                                                                                 >
+                                                                                                                                                   
+                                          <div className="text-c                                                               fa         s yet. Create o                                                                          <div className=       o                                          <div className="text-c                                                               fa  nt-m                "
+                                          <div className=                                                                            <div className=                                                                            <div className=                                                                            <div className=                                                                            <div className=                                                  ra                                          <div className=                                                                            <die.description}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mb-4">
+                    Updated {new Date(tree.updated_at).toLocaleDateString()}
+                  </p>
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/family-trees/${tree.tree_id}`}
+                      className="flex-1 text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteTree(tree.tree_id)}
+                      className="flex-1 text-center px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium transition"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

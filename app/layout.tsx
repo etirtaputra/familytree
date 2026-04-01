@@ -1,24 +1,29 @@
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
+import { AuthProvider } from "@/lib/auth-context";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'Family Tree Tracker',
-  description: 'Track your family history, relationships, and locations. Share your family tree virally.',
+  title: {
+    template: '%s | Family Tree Tracker',
+    default: 'Family Tree Tracker',
+  },
+  description: "Create and share beautiful family trees",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script src="https://cdn.tailwindcss.com"></script>
       </head>
-      <body className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-        {children}
+      <body className="antialiased">
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
