@@ -1,33 +1,29 @@
 {
-  "name": "familytree",
-  "version": "1.0.0",
-  "description": "A viral family tree tracker - track names, relationships, locations, and share with family",
+  "name": "nextjs",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "^16.0.0",
-    "@supabase/supabase-js": "^2.38.0",
-    "@tailwindcss/postcss": "^4.0.0"
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@supabase/supabase-js": "^2.86.2",
+    "ai": "^3.4.0",
+    "lucide-react": "^0.556.0",
+    "next": "16.0.7",
+    "openai": "^4.55.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.0",
-    "@types/node": "^20.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/etirtaputra/familytree.git"
-  },
-  "keywords": ["family", "tree", "genealogy", "tracker"],
-  "author": "Etirta Putra",
-  "license": "MIT"
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.7",
+    "typescript": "^5"
+  }
 }
