@@ -1,14 +1,11 @@
+export const dynamic = 'force-dynamic';
+
 'use client';
 
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -32,6 +29,11 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
