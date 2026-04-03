@@ -1,107 +1,84 @@
 'use client';
-
 import { useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
-interface Member {
-  id: string;
-  name: string;
-  dob: string;
-  location: string;
-}
-
-interface Relationship {
-  id: string;
-  person1: string;
-  person2: string;
-  type: string;
-}
-
-export default function Editor() {
+export default function Editor({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const params = useParams();
-  const treeId = params.id as string;
-
-  const [members, setMembers] = useState<Member[]>([]);
-  const [relationships, setRelationships] = useState<Relationship[]>([]);
-  const [view, setView] = useState<'members' | 'relationships' | 'view'>('members');
-
+  const [members, setMembers] = useState([]);
+  const [relationships, setRelationships] = useState([]);
+  const [view, setView] = useState('members');
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
   const [location, setLocation] = useState('');
-  const [person1, setPerson1] = useState('');
-  const [person2, setPerson2] = useState('');
+  const [p1, setP1] = useState('');
+  const [p2, setP2] = useState('');
   const [relType, setRelType] = useState('parent');
 
   const addMember = () => {
     if (!name.trim()) return;
-    setMembers([...members, { id: Date.now().toString(), name, dob, location }]);
+    setMembers([...members, { id: Date.now(), name, dob, location }]);
     setName('');
     setDob('');
     setLocation('');
   };
 
-  const addRelationship = () => {
-    if (!person1 || !person2 || person1 === person2) return;
-    setRelationships([...relationships, { id: Date.now().toString(), person1, person2, type: relType }]);
-    setPerson1('');
-    setPerson2('');
+  const addRel = () => {
+    if (!p1 || !p2 || p1 === p2) return;
+    setRelationships([...relationships, { id: Date.now(), p1, p2, type: relType }]);
+    setP1('');
+    setP2('');
   };
 
-  const getMemberName = (id: string) => members.find(m => m.id === id)?.name || '?';
-  const relLabels: Record<string, string> = {
-    parent: 'Parent of',
-    child: 'Child of',
-    spouse: 'Spouse of',
-    sibling: 'Sibling of',
-  };
+  const getName = (id) => members.find(m => m.id === id)?.name || '?';
+  const relLabels = { parent: 'Parent of', child: 'Child of', spouse: 'Spouse of', sibling: 'Sibling of' };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Family Tree Editor</h1>
-          <button onClick={() => router.back()} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-            ← Back
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-900 to-slate-900">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-40 left-40 w-96 h-96 bg-purple-500 rounded-full mix-blend-screen filter blur-3xl opacity-20"></div>
+        <div className="absolute bottom-40 right-40 w-96 h-96 bg-blue-500 rounded-full mix-blend-screen filter blur-3xl opacity-20"></div>
+      </div>
+
+      <nav className="relative backdrop-blur-md bg-white/10 border-b border-white/20 shadow-2xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-white">Family Tree Editor</h1>
+          <button onClick={() => router.back()} className="px-6 py-2 backdrop-blur-xl bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 font-semibold transition-all">← Back</button>
         </div>
       </nav>
 
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex gap-4">
-          <button onClick={() => setView('members')} className={`px-4 py-2 rounded ${view === 'members' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}>
-            Add Members
-          </button>
-          <button onClick={() => setView('relationships')} className={`px-4 py-2 rounded ${view === 'relationships' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}>
-            Add Relationships
-          </button>
-          <button onClick={() => setView('view')} className={`px-4 py-2 rounded ${view === 'view' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}>
-            View Tree
-          </button>
+      <div className="relative backdrop-blur-md bg-white/10 border-b border-white/20 sticky top-20 z-40">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex gap-3">
+          {['members', 'relationships', 'view'].map(v => (
+            <button 
+              key={v}
+              onClick={() => setView(v)} 
+              className={`px-5 py-2 rounded-lg font-semibold transition-all ${view === v ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50' : 'backdrop-blur-xl bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'}`}
+            >
+              {v === 'members' ? 'Members' : v === 'relationships' ? 'Relationships' : 'View'}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="relative max-w-7xl mx-auto px-6 py-12">
         {view === 'members' && (
-          <div className="bg-white p-8 rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-6">Add Family Member</h2>
-            <div className="space-y-4 max-w-md">
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" className="w-full px-4 py-2 border rounded" />
-              <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full px-4 py-2 border rounded" />
-              <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location" className="w-full px-4 py-2 border rounded" />
-              <button onClick={addMember} className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                Add Member
-              </button>
+          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10">
+            <h2 className="text-3xl font-bold text-white mb-8">Add Family Member</h2>
+            <div className="space-y-4 max-w-md mb-8">
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all" />
+              <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all" />
+              <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location" className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all" />
+              <button onClick={addMember} className="w-full px-5 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/50 font-bold text-lg transition-all">Add Member</button>
             </div>
             {members.length > 0 && (
-              <div className="mt-8">
-                <h3 className="font-bold mb-4">Members ({members.length})</h3>
-                <div className="space-y-2">
+              <div>
+                <h3 className="text-xl font-bold text-white mb-4">Members ({members.length})</h3>
+                <div className="space-y-3">
                   {members.map(m => (
-                    <div key={m.id} className="p-3 bg-gray-100 rounded">
-                      <div className="font-bold">{m.name}</div>
-                      {m.dob && <div className="text-sm text-gray-600">DOB: {m.dob}</div>}
-                      {m.location && <div className="text-sm text-gray-600">📍 {m.location}</div>}
+                    <div key={m.id} className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-4 hover:bg-white/10 transition-all">
+                      <div className="font-bold text-white text-lg">{m.name}</div>
+                      {m.dob && <div className="text-sm text-gray-400">DOB: {m.dob}</div>}
+                      {m.location && <div className="text-sm text-gray-400">📍 {m.location}</div>}
                     </div>
                   ))}
                 </div>
@@ -111,34 +88,32 @@ export default function Editor() {
         )}
 
         {view === 'relationships' && (
-          <div className="bg-white p-8 rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-6">Add Relationship</h2>
-            <div className="space-y-4 max-w-md">
-              <select value={person1} onChange={(e) => setPerson1(e.target.value)} className="w-full px-4 py-2 border rounded">
+          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10">
+            <h2 className="text-3xl font-bold text-white mb-8">Add Relationship</h2>
+            <div className="space-y-4 max-w-md mb-8">
+              <select value={p1} onChange={(e) => setP1(e.target.value)} className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all">
                 <option value="">Select Person 1</option>
                 {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
-              <select value={relType} onChange={(e) => setRelType(e.target.value)} className="w-full px-4 py-2 border rounded">
+              <select value={relType} onChange={(e) => setRelType(e.target.value)} className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all">
                 <option value="parent">Parent</option>
                 <option value="child">Child</option>
                 <option value="spouse">Spouse</option>
                 <option value="sibling">Sibling</option>
               </select>
-              <select value={person2} onChange={(e) => setPerson2(e.target.value)} className="w-full px-4 py-2 border rounded">
+              <select value={p2} onChange={(e) => setP2(e.target.value)} className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all">
                 <option value="">Select Person 2</option>
                 {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
-              <button onClick={addRelationship} className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                Add Relationship
-              </button>
+              <button onClick={addRel} className="w-full px-5 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/50 font-bold text-lg transition-all">Add Relationship</button>
             </div>
             {relationships.length > 0 && (
-              <div className="mt-8">
-                <h3 className="font-bold mb-4">Relationships ({relationships.length})</h3>
-                <div className="space-y-2">
+              <div>
+                <h3 className="text-xl font-bold text-white mb-4">Relationships ({relationships.length})</h3>
+                <div className="space-y-3">
                   {relationships.map(r => (
-                    <div key={r.id} className="p-3 bg-gray-100 rounded">
-                      <strong>{getMemberName(r.person1)}</strong> is {relLabels[r.type]} <strong>{getMemberName(r.person2)}</strong>
+                    <div key={r.id} className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-4 hover:bg-white/10 transition-all text-gray-200">
+                      <strong className="text-white">{getName(r.p1)}</strong> is {relLabels[r.type]} <strong className="text-white">{getName(r.p2)}</strong>
                     </div>
                   ))}
                 </div>
@@ -148,31 +123,31 @@ export default function Editor() {
         )}
 
         {view === 'view' && (
-          <div className="bg-white p-8 rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-6">Family Tree Overview</h2>
+          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10">
+            <h2 className="text-3xl font-bold text-white mb-8">Family Tree Overview</h2>
             {members.length === 0 ? (
-              <p className="text-gray-600">No members added yet</p>
+              <p className="text-gray-400 text-lg">No members added yet</p>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div>
-                  <h3 className="font-bold mb-4">Members ({members.length})</h3>
+                  <h3 className="text-xl font-bold text-white mb-4">Members ({members.length})</h3>
                   <div className="grid grid-cols-2 gap-4">
                     {members.map(m => (
-                      <div key={m.id} className="p-4 bg-indigo-50 rounded border border-indigo-200">
-                        <div className="font-bold text-lg">{m.name}</div>
-                        {m.dob && <div className="text-sm text-gray-600">Born: {m.dob}</div>}
-                        {m.location && <div className="text-sm text-gray-600">📍 {m.location}</div>}
+                      <div key={m.id} className="backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/50 rounded-lg p-5">
+                        <div className="font-bold text-white text-lg">{m.name}</div>
+                        {m.dob && <div className="text-sm text-gray-300">Born: {m.dob}</div>}
+                        {m.location && <div className="text-sm text-gray-300">📍 {m.location}</div>}
                       </div>
                     ))}
                   </div>
                 </div>
                 {relationships.length > 0 && (
                   <div>
-                    <h3 className="font-bold mb-4">Relationships ({relationships.length})</h3>
-                    <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-white mb-4">Relationships ({relationships.length})</h3>
+                    <div className="space-y-3">
                       {relationships.map(r => (
-                        <div key={r.id} className="p-3 bg-gray-100 rounded">
-                          <strong>{getMemberName(r.person1)}</strong> is {relLabels[r.type]} <strong>{getMemberName(r.person2)}</strong>
+                        <div key={r.id} className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-4 text-gray-200">
+                          <strong className="text-white">{getName(r.p1)}</strong> is {relLabels[r.type]} <strong className="text-white">{getName(r.p2)}</strong>
                         </div>
                       ))}
                     </div>
