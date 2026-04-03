@@ -1,161 +1,53 @@
 'use client';
-
-export const dynamic = 'force-dynamic';
-
+import { useState } from 'react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+
+interface Tree {
+  id: string;
+  name: string;
+}
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [trees, setTrees] = useState<Tree[]>([]);
+  const [treeName, setTreeName] = useState('');
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
-    };
-    checkUser();
-  }, []);
+  const createTree = () => {
+    if (!treeName.trim()) return;
+    setTrees([...trees, { id: Date.now().toString(), name: treeName }]);
+    setTreeName('');
+  };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
-      {/* Navigation */}
-      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl">🌳</span>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Family Tree Tracker</h1>
-          </div>
-          <div className="flex space-x-4">
-            <Link href="/family-trees/demo" className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors">
-              Demo
-            </Link>
-            {!loading && user ? (
-              <Link href="/dashboard" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
-                Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link href="/auth/login" className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors">
-                  Sign In
-                </Link>
-                <Link href="/auth/signup" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <h1 className="text-3xl font-bold text-indigo-600">🌳 Family Tree</h1>
         </div>
       </nav>
-
-      {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center">
-          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Build Your Family Tree
-          </h2>
-          <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Track names, relationships, and locations. Connect your family across generations and share your legacy with the world.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            {!loading && user ? (
-              <Link href="/dashboard" className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-lg transition-colors">
-                Go to Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link href="/auth/signup" className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-lg transition-colors">
-                  Get Started Free
-                </Link>
-                <Link href="/family-trees/demo" className="px-8 py-4 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg font-bold text-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  Try Demo
-                </Link>
-              </>
-            )}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold mb-6">Create a New Family Tree</h2>
+          <div className="flex gap-4">
+            <input type="text" value={treeName} onChange={(e) => setTreeName(e.target.value)} placeholder="Enter family tree name..." className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" onKeyPress={(e) => e.key === 'Enter' && createTree()} />
+            <button onClick={createTree} className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">Create</button>
           </div>
         </div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mt-20">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-4xl mb-4">👨‍👩‍👧‍👦</div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Track Members</h3>
-            <p className="text-gray-700 dark:text-gray-300">
-              Add family members with names, birth dates, photos, and bios. Build your family tree organically.
-            </p>
+        {trees.length === 0 ? (
+          <div className="text-center py-12"><p className="text-gray-600 text-lg">No family trees yet. Create one above!</p></div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {trees.map((tree) => (
+              <div key={tree.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition p-6">
+                <h3 className="text-xl font-bold mb-4">{tree.name}</h3>
+                <div className="flex gap-2">
+                  <Link href={`/editor/${tree.id}`} className="flex-1 text-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">Edit</Link>
+                  <button onClick={() => setTrees(trees.filter(t => t.id !== tree.id))} className="flex-1 text-center px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium">Delete</button>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-4xl mb-4">🔗</div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Connect Relationships</h3>
-            <p className="text-gray-700 dark:text-gray-300">
-              Define parent-child, sibling, and marriage relationships. Visualize your family structure.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-4xl mb-4">📍</div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Map Locations</h3>
-            <p className="text-gray-700 dark:text-gray-300">
-              See where your family members live. Discover connections across cities and countries.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-4xl mb-4">🌳</div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Visualize Tree</h3>
-            <p className="text-gray-700 dark:text-gray-300">
-              Beautiful hierarchical tree display. See generations unfold at a glance.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-4xl mb-4">🔗</div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Share & Go Viral</h3>
-            <p className="text-gray-700 dark:text-gray-300">
-              Generate unique shareable links. Invite family to contribute and grow your tree.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <div className="text-4xl mb-4">📊</div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Track Growth</h3>
-            <p className="text-gray-700 dark:text-gray-300">
-              Watch your family tree grow with sharing analytics. See who joined through your links.
-            </p>
-          </div>
-        </div>
-
-        {/* Call to Action */}
-        <div className="mt-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-12 text-center text-white">
-          <h3 className="text-3xl font-bold mb-4">Ready to Start Your Family Tree?</h3>
-          <p className="text-lg mb-8 opacity-90">
-            Create your first family tree in minutes and start connecting with your relatives.
-          </p>
-          {!loading && user ? (
-            <Link href="/dashboard" className="inline-block px-8 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-gray-100 transition-colors">
-              Go to Dashboard
-            </Link>
-          ) : (
-            <Link href="/auth/signup" className="inline-block px-8 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-gray-100 transition-colors">
-              Create Free Account
-            </Link>
-          )}
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 dark:bg-gray-900 text-gray-400 py-8 mt-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2024 Family Tree Tracker. All rights reserved.</p>
-        </div>
-      </footer>
-    </main>
+        )}
+      </div>
+    </div>
   );
 }
