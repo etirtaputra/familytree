@@ -2,10 +2,24 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+interface Member {
+  id: number;
+  name: string;
+  dob: string;
+  location: string;
+}
+
+interface Rel {
+  id: number;
+  p1: number;
+  p2: number;
+  type: string;
+}
+
 export default function Editor({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const [members, setMembers] = useState([]);
-  const [relationships, setRelationships] = useState([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [relationships, setRelationships] = useState<Rel[]>([]);
   const [view, setView] = useState('members');
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
@@ -24,13 +38,13 @@ export default function Editor({ params }: { params: { id: string } }) {
 
   const addRel = () => {
     if (!p1 || !p2 || p1 === p2) return;
-    setRelationships([...relationships, { id: Date.now(), p1, p2, type: relType }]);
+    setRelationships([...relationships, { id: Date.now(), p1: Number(p1), p2: Number(p2), type: relType }]);
     setP1('');
     setP2('');
   };
 
-  const getName = (id) => members.find(m => m.id === id)?.name || '?';
-  const relLabels = { parent: 'Parent of', child: 'Child of', spouse: 'Spouse of', sibling: 'Sibling of' };
+  const getName = (id: any) => members.find(m => m.id === id)?.name || '?';
+  const relLabels: Record<string, string> = { parent: 'Parent of', child: 'Child of', spouse: 'Spouse of', sibling: 'Sibling of' };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-900 to-slate-900">
