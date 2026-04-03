@@ -16,6 +16,38 @@ interface Rel {
   type: string;
 }
 
+function TreeNode({ memberId, members, relationships }: { memberId: number; members: Member[]; relationships: Rel[] }) {
+  const member = members.find(m => m.id === memberId);
+  if (!member) return null;
+
+  const children = relationships.filter(r => r.p1 === memberId && r.type === 'child').map(r => r.p2);
+  const spouse = relationships.find(r => (r.p1 === memberId || r.p2 === memberId) && r.type === 'spouse');
+  const spouseName = spouse ? members.find(m => m.id === (spouse.p1 === memberId ? spouse.p2 : spouse.p1))?.name : null;
+
+  return (
+    <div className="inline-block">
+      <div className="relative">
+        <div className="backdrop-blur-xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 border-2 border-purple-400/60 rounded-xl px-6 py-4 min-w-max hover:border-purple-300 transition-all shadow-lg">
+          <div className="font-bold text-white text-lg">{member.name}</div>
+          {spouseName && <div className="text-sm text-pink-300">💑 {spouseName}</div>}
+          {member.dob && <div className="text-xs text-gray-300">📅 {member.dob}</div>}
+          {member.location && <div className="text-xs text-gray-300">📍 {member.location}</div>}
+        </div>
+
+        {children.length > 0 && (
+          <div className="mt-6 ml-4 pl-4 border-l-2 border-purple-400/50">
+            {children.map(childId => (
+              <div key={childId} className="mb-6">
+                <TreeNode memberId={childId} members={members} relationships={relationships} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Editor({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
@@ -28,7 +60,6 @@ export default function Editor({ params }: { params: { id: string } }) {
   const [p2, setP2] = useState('');
   const [relType, setRelType] = useState('parent');
 
-  // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem(`tree-${params.id}`);
     if (saved) {
@@ -38,7 +69,6 @@ export default function Editor({ params }: { params: { id: string } }) {
     }
   }, [params.id]);
 
-  // Save to localStorage whenever data changes
   useEffect(() => {
     localStorage.setItem(`tree-${params.id}`, JSON.stringify({ members, relationships }));
   }, [members, relationships, params.id]);
@@ -61,8 +91,10 @@ export default function Editor({ params }: { params: { id: string } }) {
   const getName = (id: any) => members.find(m => m.id === id)?.name || '?';
   const relLabels: Record<string, string> = { parent: 'Parent of', child: 'Child of', spouse: 'Spouse of', sibling: 'Sibling of' };
 
-  const getChildren = (parentId: number) => relationships.filter(r => r.p1 === parentId && r.type === 'child').map(r => r.p2);
-  const getParents = (childId: number) => relationships.filter(r => r.p2 === childId && r.type === 'child').map(r => r.p1);
+  const getRootMembers = () => {
+    const membersWithParents = new Set(relationships.filter(r => r.type === 'child').map(r => r.p2));
+    return members.filter(m => !membersWithParents.has(m.id));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-900 to-slate-900">
@@ -72,19 +104,19 @@ export default function Editor({ params }: { params: { id: string } }) {
       </div>
 
       <nav className="relative backdrop-blur-md bg-white/10 border-b border-white/20 shadow-2xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-full mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Family Tree Editor</h1>
           <button onClick={() => router.back()} className="px-6 py-2 backdrop-blur-xl bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 font-semibold transition-all">← Back</button>
         </div>
       </nav>
 
       <div className="relative backdrop-blur-md bg-white/10 border-b border-white/20 sticky top-20 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex gap-3">
+        <div className="max-w-full mx-auto px-6 py-3 flex gap-3 overflow-x-auto">
           {['members', 'relationships', 'view'].map(v => (
             <button 
               key={v}
               onClick={() => setView(v)} 
-              className={`px-5 py-2 rounded-lg font-semibold transition-all ${view === v ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50' : 'backdrop-blur-xl bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'}`}
+              className={`px-5 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${view === v ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50' : 'backdrop-blur-xl bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'}`}
             >
               {v === 'members' ? 'Members' : v === 'relationships' ? 'Relationships' : 'Tree View'}
             </button>
@@ -92,11 +124,11 @@ export default function Editor({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6 py-12">
+      <div className="relative max-w-full mx-auto px-6 py-12">
         {view === 'members' && (
-          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10">
+          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10 max-w-2xl">
             <h2 className="text-3xl font-bold text-white mb-8">Add Family Member</h2>
-            <div className="space-y-4 max-w-md mb-8">
+            <div className="space-y-4 mb-8">
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all" />
               <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all" />
               <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location" className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all" />
@@ -109,7 +141,7 @@ export default function Editor({ params }: { params: { id: string } }) {
                   {members.map(m => (
                     <div key={m.id} className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-4 hover:bg-white/10 transition-all">
                       <div className="font-bold text-white text-lg">{m.name}</div>
-                      {m.dob && <div className="text-sm text-gray-400">DOB: {m.dob}</div>}
+                      {m.dob && <div className="text-sm text-gray-400">📅 {m.dob}</div>}
                       {m.location && <div className="text-sm text-gray-400">📍 {m.location}</div>}
                     </div>
                   ))}
@@ -120,9 +152,9 @@ export default function Editor({ params }: { params: { id: string } }) {
         )}
 
         {view === 'relationships' && (
-          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10">
+          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10 max-w-2xl">
             <h2 className="text-3xl font-bold text-white mb-8">Add Relationship</h2>
-            <div className="space-y-4 max-w-md mb-8">
+            <div className="space-y-4 mb-8">
               <select value={p1} onChange={(e) => setP1(e.target.value)} className="w-full px-5 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white/20 font-medium transition-all">
                 <option value="">Select Person 1</option>
                 {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -145,7 +177,7 @@ export default function Editor({ params }: { params: { id: string } }) {
                 <div className="space-y-3">
                   {relationships.map(r => (
                     <div key={r.id} className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-4 hover:bg-white/10 transition-all text-gray-200">
-                      <strong className="text-white">{getName(r.p1)}</strong> is {relLabels[r.type]} <strong className="text-white">{getName(r.p2)}</strong>
+                      <strong className="text-white">{getName(r.p1)}</strong> <span className="text-purple-400">is {relLabels[r.type]}</span> <strong className="text-white">{getName(r.p2)}</strong>
                     </div>
                   ))}
                 </div>
@@ -155,41 +187,22 @@ export default function Editor({ params }: { params: { id: string } }) {
         )}
 
         {view === 'view' && (
-          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10">
-            <h2 className="text-3xl font-bold text-white mb-8">🌳 Family Tree</h2>
+          <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10 overflow-x-auto">
+            <h2 className="text-3xl font-bold text-white mb-12">🌳 Family Hierarchy</h2>
             {members.length === 0 ? (
               <p className="text-gray-400 text-lg">No members added yet</p>
             ) : (
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-6">All Members</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {members.map(m => (
-                      <div key={m.id} className="backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/50 rounded-lg p-5 hover:border-purple-300/80 transition-all">
-                        <div className="font-bold text-white text-lg">{m.name}</div>
-                        {m.dob && <div className="text-sm text-gray-300">Born: {m.dob}</div>}
-                        {m.location && <div className="text-sm text-gray-300">📍 {m.location}</div>}
-                        {getChildren(m.id).length > 0 && (
-                          <div className="text-sm text-purple-300 mt-2">👶 {getChildren(m.id).length} child(ren): {getChildren(m.id).map(c => getName(c)).join(', ')}</div>
-                        )}
-                        {getParents(m.id).length > 0 && (
-                          <div className="text-sm text-blue-300 mt-1">👨‍👩‍👧 Parents: {getParents(m.id).map(p => getName(p)).join(', ')}</div>
-                        )}
+              <div className="space-y-8 inline-block">
+                {getRootMembers().length > 0 ? (
+                  <div>
+                    {getRootMembers().map(root => (
+                      <div key={root.id} className="mb-8">
+                        <TreeNode memberId={root.id} members={members} relationships={relationships} />
                       </div>
                     ))}
                   </div>
-                </div>
-                {relationships.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-6">All Relationships</h3>
-                    <div className="space-y-3">
-                      {relationships.map(r => (
-                        <div key={r.id} className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-4 text-gray-200 hover:bg-white/10 transition-all">
-                          <strong className="text-white">{getName(r.p1)}</strong> <span className="text-purple-400">is {relLabels[r.type]}</span> <strong className="text-white">{getName(r.p2)}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                ) : (
+                  <p className="text-gray-400">Define parent-child relationships to see the family tree hierarchy</p>
                 )}
               </div>
             )}
