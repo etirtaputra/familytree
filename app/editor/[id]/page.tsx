@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Member {
@@ -28,6 +28,21 @@ export default function Editor({ params }: { params: { id: string } }) {
   const [p2, setP2] = useState('');
   const [relType, setRelType] = useState('parent');
 
+  // Load from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(`tree-${params.id}`);
+    if (saved) {
+      const data = JSON.parse(saved);
+      setMembers(data.members || []);
+      setRelationships(data.relationships || []);
+    }
+  }, [params.id]);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem(`tree-${params.id}`, JSON.stringify({ members, relationships }));
+  }, [members, relationships, params.id]);
+
   const addMember = () => {
     if (!name.trim()) return;
     setMembers([...members, { id: Date.now(), name, dob, location }]);
@@ -45,6 +60,9 @@ export default function Editor({ params }: { params: { id: string } }) {
 
   const getName = (id: any) => members.find(m => m.id === id)?.name || '?';
   const relLabels: Record<string, string> = { parent: 'Parent of', child: 'Child of', spouse: 'Spouse of', sibling: 'Sibling of' };
+
+  const getChildren = (parentId: number) => relationships.filter(r => r.p1 === parentId && r.type === 'child').map(r => r.p2);
+  const getParents = (childId: number) => relationships.filter(r => r.p2 === childId && r.type === 'child').map(r => r.p1);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-900 to-slate-900">
@@ -68,7 +86,7 @@ export default function Editor({ params }: { params: { id: string } }) {
               onClick={() => setView(v)} 
               className={`px-5 py-2 rounded-lg font-semibold transition-all ${view === v ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50' : 'backdrop-blur-xl bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'}`}
             >
-              {v === 'members' ? 'Members' : v === 'relationships' ? 'Relationships' : 'View'}
+              {v === 'members' ? 'Members' : v === 'relationships' ? 'Relationships' : 'Tree View'}
             </button>
           ))}
         </div>
@@ -138,30 +156,36 @@ export default function Editor({ params }: { params: { id: string } }) {
 
         {view === 'view' && (
           <div className="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-10">
-            <h2 className="text-3xl font-bold text-white mb-8">Family Tree Overview</h2>
+            <h2 className="text-3xl font-bold text-white mb-8">🌳 Family Tree</h2>
             {members.length === 0 ? (
               <p className="text-gray-400 text-lg">No members added yet</p>
             ) : (
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-4">Members ({members.length})</h3>
+                  <h3 className="text-xl font-bold text-white mb-6">All Members</h3>
                   <div className="grid grid-cols-2 gap-4">
                     {members.map(m => (
-                      <div key={m.id} className="backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/50 rounded-lg p-5">
+                      <div key={m.id} className="backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/50 rounded-lg p-5 hover:border-purple-300/80 transition-all">
                         <div className="font-bold text-white text-lg">{m.name}</div>
                         {m.dob && <div className="text-sm text-gray-300">Born: {m.dob}</div>}
                         {m.location && <div className="text-sm text-gray-300">📍 {m.location}</div>}
+                        {getChildren(m.id).length > 0 && (
+                          <div className="text-sm text-purple-300 mt-2">👶 {getChildren(m.id).length} child(ren): {getChildren(m.id).map(c => getName(c)).join(', ')}</div>
+                        )}
+                        {getParents(m.id).length > 0 && (
+                          <div className="text-sm text-blue-300 mt-1">👨‍👩‍👧 Parents: {getParents(m.id).map(p => getName(p)).join(', ')}</div>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
                 {relationships.length > 0 && (
                   <div>
-                    <h3 className="text-xl font-bold text-white mb-4">Relationships ({relationships.length})</h3>
+                    <h3 className="text-xl font-bold text-white mb-6">All Relationships</h3>
                     <div className="space-y-3">
                       {relationships.map(r => (
-                        <div key={r.id} className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-4 text-gray-200">
-                          <strong className="text-white">{getName(r.p1)}</strong> is {relLabels[r.type]} <strong className="text-white">{getName(r.p2)}</strong>
+                        <div key={r.id} className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-4 text-gray-200 hover:bg-white/10 transition-all">
+                          <strong className="text-white">{getName(r.p1)}</strong> <span className="text-purple-400">is {relLabels[r.type]}</span> <strong className="text-white">{getName(r.p2)}</strong>
                         </div>
                       ))}
                     </div>
